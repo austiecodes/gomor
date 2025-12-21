@@ -24,6 +24,8 @@ type ChatResponse interface {
 type QueryClient interface {
 	// ChatStream streams the response for a single user query under the given model.
 	ChatStream(ctx context.Context, model types.Model, query string) (StreamResponse, error)
+	// ChatStreamWithContext streams the response with optional system context prefix.
+	ChatStreamWithContext(ctx context.Context, model types.Model, systemContext, query string) (StreamResponse, error)
 	// ListModels lists models available to this client/provider.
 	ListModels(ctx context.Context) ([]string, error)
 }

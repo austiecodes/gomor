@@ -20,6 +20,16 @@ func (q *QueryClient) ChatStream(ctx context.Context, model types.Model, query s
 	return q.c.ChatStream(ctx, req)
 }
 
+func (q *QueryClient) ChatStreamWithContext(ctx context.Context, model types.Model, systemContext, query string) (client.StreamResponse, error) {
+	var msgs []Message
+	if systemContext != "" {
+		msgs = append(msgs, SystemMessage(systemContext))
+	}
+	msgs = append(msgs, UserMessage(query))
+	req := NewChatRequest(model.ModelID).WithMessages(msgs...)
+	return q.c.ChatStream(ctx, req)
+}
+
 func (q *QueryClient) ListModels(ctx context.Context) ([]string, error) {
 	return q.c.ListModels(ctx)
 }

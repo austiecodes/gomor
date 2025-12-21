@@ -1,7 +1,6 @@
 package set
 
 import (
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/austiecodes/goa/internal/utils"
 )
@@ -12,20 +11,7 @@ func initialModel() Model {
 		config = utils.DefaultConfig()
 	}
 
-	items := []list.Item{
-		MenuItem{title: "provider", desc: "Configure provider settings (API key, base URL)"},
-		MenuItem{title: "chat-model", desc: "Set default model for chat"},
-		MenuItem{title: "title-model", desc: "Set model for generating conversation titles"},
-		MenuItem{title: "think-model", desc: "Set model for thinking"},
-		MenuItem{title: "exit", desc: "Exit settings"},
-	}
-
-	delegate := list.NewDefaultDelegate()
-	l := list.New(items, delegate, 60, 14)
-	l.Title = "Goa Settings"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.SetShowHelp(true)
+	l := createMainMenu()
 
 	return Model{
 		Screen: ScreenMainMenu,
@@ -44,7 +30,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
 		m.Height = msg.Height
-		m.List.SetSize(min(msg.Width-4, 80), min(msg.Height-4, 20))
+		m.List.SetSize(min(msg.Width-4, 80), min(msg.Height-4, 30))
 		return m, nil
 
 	case tea.KeyMsg:
@@ -101,6 +87,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateModelProviderSelect(msg)
 	case ScreenModelSelect:
 		return m.updateModelSelect(msg)
+	case ScreenMemoryConfig:
+		return m.updateMemoryConfig(msg)
 	}
 
 	return m, nil

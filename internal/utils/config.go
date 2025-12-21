@@ -24,15 +24,35 @@ type ProviderConfigs struct {
 
 // ModelConfig represents the model section in config
 type ModelConfig struct {
-	ChatModel  *types.Model `json:"chat_model,omitempty"`
-	TitleModel *types.Model `json:"title_model,omitempty"`
-	ThinkModel *types.Model `json:"think_model,omitempty"`
+	ChatModel      *types.Model `json:"chat_model,omitempty"`
+	TitleModel     *types.Model `json:"title_model,omitempty"`
+	ThinkModel     *types.Model `json:"think_model,omitempty"`
+	ToolModel      *types.Model `json:"tool_model,omitempty"`
+	EmbeddingModel *types.Model `json:"embedding_model,omitempty"`
+}
+
+// FTS strategy constants
+const (
+	FTSStrategyDirect   = "direct"   // Tokenize raw query directly
+	FTSStrategySummary  = "summary"  // Use tool_model to summarize query first
+	FTSStrategyKeywords = "keywords" // Use tool_model to extract keywords
+	FTSStrategyAuto     = "auto"     // Try direct first, fallback to summary if few results
+)
+
+// MemoryConfig represents the memory/retrieval configuration
+type MemoryConfig struct {
+	MinSimilarity    float64 `json:"min_similarity"`
+	MemoryTopK       int     `json:"memory_top_k"`
+	HistoryTopK      int     `json:"history_top_k"`
+	MaxInjectedChars int     `json:"max_injected_chars"`
+	FTSStrategy      string  `json:"fts_strategy"`
 }
 
 // Config represents the application configuration
 type Config struct {
 	Providers ProviderConfigs `json:"providers"`
 	Model     ModelConfig     `json:"model"`
+	Memory    MemoryConfig    `json:"memory"`
 	Debug     bool            `json:"debug,omitempty"`
 }
 
@@ -55,6 +75,21 @@ func DefaultConfig() *Config {
 				Provider: consts.ProviderOpenAI,
 				ModelID:  string(openai.ChatModelGPT5Nano),
 			},
+			ToolModel: &types.Model{
+				Provider: consts.ProviderOpenAI,
+				ModelID:  string(openai.ChatModelGPT4oMini),
+			},
+			EmbeddingModel: &types.Model{
+				Provider: consts.ProviderOpenAI,
+				ModelID:  string(openai.EmbeddingModelTextEmbedding3Small),
+			},
+		},
+		Memory: MemoryConfig{
+			MinSimilarity:    0.80,
+			MemoryTopK:       10,
+			HistoryTopK:      10,
+			MaxInjectedChars: 4000,
+			FTSStrategy:      FTSStrategyDirect,
 		},
 		Debug: false,
 	}
@@ -114,6 +149,29 @@ func applyDefaults(config *Config) {
 	}
 	if config.Model.ThinkModel == nil {
 		config.Model.ThinkModel = defaultConfig.Model.ThinkModel
+	}
+	if config.Model.ToolModel == nil {
+		config.Model.ToolModel = defaultConfig.Model.ToolModel
+	}
+	if config.Model.EmbeddingModel == nil {
+		config.Model.EmbeddingModel = defaultConfig.Model.EmbeddingModel
+	}
+
+	// Apply default memory config if not set
+	if config.Memory.MinSimilarity == 0 {
+		config.Memory.MinSimilarity = defaultConfig.Memory.MinSimilarity
+	}
+	if config.Memory.MemoryTopK == 0 {
+		config.Memory.MemoryTopK = defaultConfig.Memory.MemoryTopK
+	}
+	if config.Memory.HistoryTopK == 0 {
+		config.Memory.HistoryTopK = defaultConfig.Memory.HistoryTopK
+	}
+	if config.Memory.MaxInjectedChars == 0 {
+		config.Memory.MaxInjectedChars = defaultConfig.Memory.MaxInjectedChars
+	}
+	if config.Memory.FTSStrategy == "" {
+		config.Memory.FTSStrategy = defaultConfig.Memory.FTSStrategy
 	}
 }
 

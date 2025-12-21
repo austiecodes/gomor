@@ -2,6 +2,7 @@ package set
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/austiecodes/goa/internal/consts"
@@ -31,6 +32,19 @@ func (m *Model) updateMainMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ModelType = ModelTypeThink
 				m.List = createProviderList()
 				m.Screen = ScreenModelProviderSelect
+			case "tool-model":
+				m.ModelType = ModelTypeTool
+				m.List = createProviderList()
+				m.Screen = ScreenModelProviderSelect
+			case "embedding-model":
+				m.ModelType = ModelTypeEmbedding
+				m.List = createProviderList()
+				m.Screen = ScreenModelProviderSelect
+			case "memory":
+				m.TextInputs = createMemoryConfigInputs(m.Config)
+				m.FocusedInput = 0
+				m.Screen = ScreenMemoryConfig
+				return *m, m.TextInputs[0].Focus()
 			case "exit":
 				m.Quitting = true
 				return *m, tea.Quit
@@ -138,6 +152,10 @@ func (m *Model) updateModelSelect(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Config.Model.TitleModel = newModel
 			case ModelTypeThink:
 				m.Config.Model.ThinkModel = newModel
+			case ModelTypeTool:
+				m.Config.Model.ToolModel = newModel
+			case ModelTypeEmbedding:
+				m.Config.Model.EmbeddingModel = newModel
 			}
 
 			return *m, saveConfig(m.Config)
@@ -146,6 +164,62 @@ func (m *Model) updateModelSelect(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
+	return *m, cmd
+}
+
+func (m *Model) updateMemoryConfig(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "tab", "down":
+			m.TextInputs[m.FocusedInput].Blur()
+			m.FocusedInput = (m.FocusedInput + 1) % len(m.TextInputs)
+			return *m, m.TextInputs[m.FocusedInput].Focus()
+
+		case "shift+tab", "up":
+			m.TextInputs[m.FocusedInput].Blur()
+			m.FocusedInput = (m.FocusedInput - 1 + len(m.TextInputs)) % len(m.TextInputs)
+			return *m, m.TextInputs[m.FocusedInput].Focus()
+
+		case "enter":
+			// Parse and save memory config
+			minSim, err := strconv.ParseFloat(m.TextInputs[0].Value(), 64)
+			if err != nil || minSim < 0 || minSim > 1 {
+				m.Err = fmt.Errorf("min_similarity must be a number between 0 and 1")
+				return *m, nil
+			}
+
+			memTopK, err := strconv.Atoi(m.TextInputs[1].Value())
+			if err != nil || memTopK < 1 {
+				m.Err = fmt.Errorf("memory_top_k must be a positive integer")
+				return *m, nil
+			}
+
+			histTopK, err := strconv.Atoi(m.TextInputs[2].Value())
+			if err != nil || histTopK < 1 {
+				m.Err = fmt.Errorf("history_top_k must be a positive integer")
+				return *m, nil
+			}
+
+			ftsStrategy := strings.TrimSpace(m.TextInputs[3].Value())
+			validStrategies := map[string]bool{"direct": true, "summary": true, "keywords": true, "auto": true}
+			if !validStrategies[ftsStrategy] {
+				m.Err = fmt.Errorf("fts_strategy must be one of: direct, summary, keywords, auto")
+				return *m, nil
+			}
+
+			m.Config.Memory.MinSimilarity = minSim
+			m.Config.Memory.MemoryTopK = memTopK
+			m.Config.Memory.HistoryTopK = histTopK
+			m.Config.Memory.FTSStrategy = ftsStrategy
+
+			return *m, saveConfig(m.Config)
+		}
+	}
+
+	// Update focused text input
+	var cmd tea.Cmd
+	m.TextInputs[m.FocusedInput], cmd = m.TextInputs[m.FocusedInput].Update(msg)
 	return *m, cmd
 }
 
@@ -192,6 +266,10 @@ func (m *Model) renderView() string {
 			modelName = "Title Model"
 		case ModelTypeThink:
 			modelName = "Think Model"
+		case ModelTypeTool:
+			modelName = "Tool Model"
+		case ModelTypeEmbedding:
+			modelName = "Embedding Model"
 		}
 		s.WriteString(TitleStyle.Render(fmt.Sprintf("Select Provider for %s", modelName)))
 		s.WriteString("\n\n")
@@ -206,10 +284,31 @@ func (m *Model) renderView() string {
 			modelName = "Title Model"
 		case ModelTypeThink:
 			modelName = "Think Model"
+		case ModelTypeTool:
+			modelName = "Tool Model"
+		case ModelTypeEmbedding:
+			modelName = "Embedding Model"
 		}
 		s.WriteString(TitleStyle.Render(fmt.Sprintf("Select %s", modelName)))
 		s.WriteString("\n\n")
 		s.WriteString(m.List.View())
+
+	case ScreenMemoryConfig:
+		s.WriteString(TitleStyle.Render("Memory Retrieval Settings"))
+		s.WriteString("\n\n")
+		labels := []string{
+			"Min Similarity (0.0-1.0, default: 0.80)",
+			"Memory Top K (default: 10)",
+			"History Top K (default: 10)",
+			"FTS Strategy (direct/summary/keywords/auto)",
+		}
+		for i, input := range m.TextInputs {
+			s.WriteString(InputLabelStyle.Render(labels[i]))
+			s.WriteString("\n")
+			s.WriteString(input.View())
+			s.WriteString("\n\n")
+		}
+		s.WriteString(HelpStyle.Render("Press Enter to save, Esc to cancel, Tab/Shift+Tab to navigate"))
 	}
 
 	if m.Err != nil {

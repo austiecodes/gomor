@@ -1,6 +1,8 @@
 package set
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,11 +17,14 @@ func createMainMenu() list.Model {
 		MenuItem{title: "chat-model", desc: "Set default model for chat"},
 		MenuItem{title: "title-model", desc: "Set model for generating conversation titles"},
 		MenuItem{title: "think-model", desc: "Set model for thinking"},
+		MenuItem{title: "tool-model", desc: "Set model for tool/auxiliary prompts"},
+		MenuItem{title: "embedding-model", desc: "Set model for embeddings"},
+		MenuItem{title: "memory", desc: "Configure memory retrieval settings"},
 		MenuItem{title: "exit", desc: "Exit settings"},
 	}
 
 	delegate := list.NewDefaultDelegate()
-	l := list.New(items, delegate, 60, 14)
+	l := list.New(items, delegate, 60, 30)
 	l.Title = "Goa Settings"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
@@ -74,7 +79,7 @@ func createModelList(models []string, mt ModelType) list.Model {
 	}
 
 	delegate := list.NewDefaultDelegate()
-	l := list.New(items, delegate, 60, 20)
+	l := list.New(items, delegate, 60, 30)
 
 	switch mt {
 	case ModelTypeChat:
@@ -83,12 +88,62 @@ func createModelList(models []string, mt ModelType) list.Model {
 		l.Title = "Select Title Model"
 	case ModelTypeThink:
 		l.Title = "Select Think Model"
+	case ModelTypeTool:
+		l.Title = "Select Tool Model"
+	case ModelTypeEmbedding:
+		l.Title = "Select Embedding Model"
 	}
 
 	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
 	l.SetShowHelp(true)
 	return l
+}
+
+func createMemoryConfigInputs(config *utils.Config) []textinput.Model {
+	inputs := make([]textinput.Model, 4)
+
+	// Min Similarity input
+	inputs[0] = textinput.New()
+	inputs[0].Placeholder = "0.80"
+	inputs[0].CharLimit = 10
+	inputs[0].Width = 20
+	inputs[0].SetValue(formatFloat(config.Memory.MinSimilarity))
+
+	// Memory TopK input
+	inputs[1] = textinput.New()
+	inputs[1].Placeholder = "10"
+	inputs[1].CharLimit = 5
+	inputs[1].Width = 20
+	inputs[1].SetValue(formatInt(config.Memory.MemoryTopK))
+
+	// History TopK input
+	inputs[2] = textinput.New()
+	inputs[2].Placeholder = "10"
+	inputs[2].CharLimit = 5
+	inputs[2].Width = 20
+	inputs[2].SetValue(formatInt(config.Memory.HistoryTopK))
+
+	// FTS Strategy input
+	inputs[3] = textinput.New()
+	inputs[3].Placeholder = "direct"
+	inputs[3].CharLimit = 20
+	inputs[3].Width = 20
+	if config.Memory.FTSStrategy != "" {
+		inputs[3].SetValue(config.Memory.FTSStrategy)
+	} else {
+		inputs[3].SetValue("direct")
+	}
+
+	return inputs
+}
+
+func formatFloat(f float64) string {
+	return fmt.Sprintf("%.2f", f)
+}
+
+func formatInt(i int) string {
+	return fmt.Sprintf("%d", i)
 }
 
 func saveConfig(config *utils.Config) tea.Cmd {

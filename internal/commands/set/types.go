@@ -15,6 +15,7 @@ const (
 	ScreenProviderConfig
 	ScreenModelProviderSelect
 	ScreenModelSelect
+	ScreenMemoryConfig
 )
 
 // ModelType represents which model is being configured
@@ -24,6 +25,8 @@ const (
 	ModelTypeChat ModelType = iota
 	ModelTypeTitle
 	ModelTypeThink
+	ModelTypeTool
+	ModelTypeEmbedding
 )
 
 // MenuItem implements list.Item interface
