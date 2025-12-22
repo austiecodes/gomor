@@ -9,12 +9,14 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	memstore "github.com/austiecodes/goa/internal/memory"
+	"github.com/austiecodes/goa/internal/memory/memtypes"
+	"github.com/austiecodes/goa/internal/memory/memutils"
+	"github.com/austiecodes/goa/internal/memory/store"
 	"github.com/austiecodes/goa/internal/provider"
 	"github.com/austiecodes/goa/internal/utils"
 )
 
-func createMemoryList(memories []memstore.MemoryItem, width, height int) list.Model {
+func createMemoryList(memories []memtypes.MemoryItem, width, height int) list.Model {
 	items := make([]list.Item, len(memories))
 	for i, mem := range memories {
 		items[i] = MemoryListItem{Memory: mem}
@@ -45,7 +47,7 @@ func createMemoryList(memories []memstore.MemoryItem, width, height int) list.Mo
 	return l
 }
 
-func createAddEditInputs(mem *memstore.MemoryItem) []textinput.Model {
+func createAddEditInputs(mem *memtypes.MemoryItem) []textinput.Model {
 	inputs := make([]textinput.Model, 2)
 
 	// Text input
@@ -71,13 +73,13 @@ func createAddEditInputs(mem *memstore.MemoryItem) []textinput.Model {
 
 func loadMemories() tea.Cmd {
 	return func() tea.Msg {
-		store, err := memstore.NewStore()
+		memStore, err := store.NewStore()
 		if err != nil {
 			return MemoriesLoadedMsg{Err: err}
 		}
-		defer store.Close()
+		defer memStore.Close()
 
-		memories, err := store.GetAllMemories()
+		memories, err := memStore.GetAllMemories()
 		return MemoriesLoadedMsg{Memories: memories, Err: err}
 	}
 }
@@ -108,19 +110,19 @@ func saveNewMemory(text string, tags []string) tea.Cmd {
 		}
 
 		// Normalize embedding
-		normalizedEmbedding := memstore.NormalizeVector(embedding)
+		normalizedEmbedding := memutils.NormalizeVector(embedding)
 
 		// Open store and save
-		store, err := memstore.NewStore()
+		memStore, err := store.NewStore()
 		if err != nil {
 			return MemorySavedMsg{Err: err}
 		}
-		defer store.Close()
+		defer memStore.Close()
 
-		item := &memstore.MemoryItem{
+		item := &memtypes.MemoryItem{
 			Text:       text,
 			Tags:       tags,
-			Source:     memstore.SourceExplicit,
+			Source:     memtypes.SourceExplicit,
 			Confidence: 1.0,
 			Provider:   embeddingModel.Provider,
 			ModelID:    embeddingModel.ModelID,
@@ -128,7 +130,7 @@ func saveNewMemory(text string, tags []string) tea.Cmd {
 			Embedding:  normalizedEmbedding,
 		}
 
-		err = store.SaveMemory(item)
+		err = memStore.SaveMemory(item)
 		return MemorySavedMsg{Err: err}
 	}
 }
@@ -159,22 +161,22 @@ func updateMemory(id, text string, tags []string) tea.Cmd {
 		}
 
 		// Normalize embedding
-		normalizedEmbedding := memstore.NormalizeVector(embedding)
+		normalizedEmbedding := memutils.NormalizeVector(embedding)
 
 		// Open store
-		store, err := memstore.NewStore()
+		memStore, err := store.NewStore()
 		if err != nil {
 			return MemorySavedMsg{Err: err}
 		}
-		defer store.Close()
+		defer memStore.Close()
 
 		// Delete old and save new (simple update strategy)
-		_ = store.DeleteMemory(id)
+		_ = memStore.DeleteMemory(id)
 
-		item := &memstore.MemoryItem{
+		item := &memtypes.MemoryItem{
 			Text:       text,
 			Tags:       tags,
-			Source:     memstore.SourceExplicit,
+			Source:     memtypes.SourceExplicit,
 			Confidence: 1.0,
 			Provider:   embeddingModel.Provider,
 			ModelID:    embeddingModel.ModelID,
@@ -182,20 +184,20 @@ func updateMemory(id, text string, tags []string) tea.Cmd {
 			Embedding:  normalizedEmbedding,
 		}
 
-		err = store.SaveMemory(item)
+		err = memStore.SaveMemory(item)
 		return MemorySavedMsg{Err: err}
 	}
 }
 
 func deleteMemory(id string) tea.Cmd {
 	return func() tea.Msg {
-		store, err := memstore.NewStore()
+		memStore, err := store.NewStore()
 		if err != nil {
 			return MemoryDeletedMsg{Err: err}
 		}
-		defer store.Close()
+		defer memStore.Close()
 
-		err = store.DeleteMemory(id)
+		err = memStore.DeleteMemory(id)
 		return MemoryDeletedMsg{Err: err}
 	}
 }
@@ -215,4 +217,3 @@ func parseTags(input string) []string {
 	}
 	return tags
 }
-

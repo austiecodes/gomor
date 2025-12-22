@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 
-	memstore "github.com/austiecodes/goa/internal/memory"
+	"github.com/austiecodes/goa/internal/memory/memtypes"
 )
 
 // Screen represents the current TUI screen
@@ -21,7 +21,7 @@ const (
 
 // MemoryListItem implements list.Item interface for memory display
 type MemoryListItem struct {
-	Memory memstore.MemoryItem
+	Memory memtypes.MemoryItem
 }
 
 func (i MemoryListItem) Title() string       { return i.Memory.Text }
@@ -35,8 +35,8 @@ type Model struct {
 	Viewport       viewport.Model
 	TextInputs     []textinput.Model
 	FocusedInput   int
-	SelectedMemory *memstore.MemoryItem
-	Memories       []memstore.MemoryItem
+	SelectedMemory *memtypes.MemoryItem
+	Memories       []memtypes.MemoryItem
 	Err            error
 	StatusMsg      string
 	Quitting       bool
@@ -46,7 +46,7 @@ type Model struct {
 
 // MemoriesLoadedMsg is sent when memories are loaded from store
 type MemoriesLoadedMsg struct {
-	Memories []memstore.MemoryItem
+	Memories []memtypes.MemoryItem
 	Err      error
 }
 
@@ -59,4 +59,3 @@ type MemorySavedMsg struct {
 type MemoryDeletedMsg struct {
 	Err error
 }
-

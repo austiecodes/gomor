@@ -1,4 +1,4 @@
-package memory
+package memutils
 
 import (
 	"encoding/binary"
@@ -87,4 +87,3 @@ func BytesToVector(b []byte) []float32 {
 	}
 	return v
 }
-

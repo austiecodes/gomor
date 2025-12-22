@@ -1,4 +1,4 @@
-package memory
+package retrieval
 
 import (
 	"context"
@@ -8,8 +8,31 @@ import (
 	"sync"
 
 	"github.com/austiecodes/goa/internal/client"
+	"github.com/austiecodes/goa/internal/memory/memtypes"
+	"github.com/austiecodes/goa/internal/memory/memutils"
+	"github.com/austiecodes/goa/internal/memory/store"
 	"github.com/austiecodes/goa/internal/types"
 	"github.com/austiecodes/goa/internal/utils"
+)
+
+// Re-export types for convenience
+type Store = store.Store
+type MemoryItem = memtypes.MemoryItem
+type MemorySource = memtypes.MemorySource
+type SearchResult = memtypes.SearchResult
+type MemoryFTSResult = memtypes.MemoryFTSResult
+type UnifiedResult = memtypes.UnifiedResult
+type RetrievalResponse = memtypes.RetrievalResponse
+
+const (
+	SourceExplicit  = memtypes.SourceExplicit
+	SourceExtracted = memtypes.SourceExtracted
+)
+
+// Re-export store and vector functions for convenience
+var (
+	NewStore        = store.NewStore
+	NormalizeVector = memutils.NormalizeVector
 )
 
 // Retriever performs hybrid retrieval from memory using vector search and FTS.

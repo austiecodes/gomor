@@ -1,4 +1,4 @@
-package memory
+package memtypes
 
 import "time"
 
@@ -58,12 +58,12 @@ type HistorySearchResult struct {
 // UnifiedResult represents a unified retrieval result from any source.
 // Used for fusion and ranking across different retrieval methods.
 type UnifiedResult struct {
-	Item         MemoryItem `json:"item"`
-	Score        float64    `json:"score"`         // normalized score (0-1, higher is better)
-	Source       string     `json:"source"`        // "vector", "fts", or "both"
-	VectorScore  float64    `json:"vector_score"`  // original vector similarity
-	FTSRank      float64    `json:"fts_rank"`      // original FTS rank
-	Snippet      string     `json:"snippet"`       // FTS snippet if available
+	Item        MemoryItem `json:"item"`
+	Score       float64    `json:"score"`        // normalized score (0-1, higher is better)
+	Source      string     `json:"source"`       // "vector", "fts", or "both"
+	VectorScore float64    `json:"vector_score"` // original vector similarity
+	FTSRank     float64    `json:"fts_rank"`     // original FTS rank
+	Snippet     string     `json:"snippet"`      // FTS snippet if available
 }
 
 // InjectedContext represents the fused retrieval context to inject into prompts.
@@ -77,4 +77,3 @@ type RetrievalResponse struct {
 	Results []UnifiedResult `json:"results"`
 	Query   string          `json:"query"`
 }
-

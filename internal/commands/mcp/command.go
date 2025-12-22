@@ -11,7 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/memory"
+	"github.com/austiecodes/goa/internal/memory/retrieval"
+	"github.com/austiecodes/goa/internal/memory/store"
 	"github.com/austiecodes/goa/internal/provider"
 	"github.com/austiecodes/goa/internal/types"
 	"github.com/austiecodes/goa/internal/utils"
@@ -130,20 +131,20 @@ func handleMemorySave(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 	}
 
 	// Normalize embedding for cosine similarity
-	normalizedEmbedding := memory.NormalizeVector(embedding)
+	normalizedEmbedding := store.NormalizeVector(embedding)
 
 	// Open memory store
-	store, err := memory.NewStore()
+	memStore, err := store.NewStore()
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("failed to open memory store: %v", err)), nil
 	}
-	defer store.Close()
+	defer memStore.Close()
 
 	// Save memory
-	item := &memory.MemoryItem{
+	item := &store.MemoryItem{
 		Text:       text,
 		Tags:       tags,
-		Source:     memory.SourceExplicit,
+		Source:     store.SourceExplicit,
 		Confidence: confidence,
 		Provider:   embeddingModel.Provider,
 		ModelID:    embeddingModel.ModelID,
@@ -151,7 +152,7 @@ func handleMemorySave(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 		Embedding:  normalizedEmbedding,
 	}
 
-	if err := store.SaveMemory(item); err != nil {
+	if err := memStore.SaveMemory(item); err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("failed to save memory: %v", err)), nil
 	}
 
@@ -186,11 +187,11 @@ func handleMemoryRetrieve(ctx context.Context, request mcp.CallToolRequest) (*mc
 	}
 
 	// Open memory store
-	store, err := memory.NewStore()
+	memStore, err := store.NewStore()
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("failed to open memory store: %v", err)), nil
 	}
-	defer store.Close()
+	defer memStore.Close()
 
 	// Create embedding client
 	embeddingModel := *config.Model.EmbeddingModel
@@ -208,8 +209,8 @@ func handleMemoryRetrieve(ctx context.Context, request mcp.CallToolRequest) (*mc
 	}
 
 	// Create retriever
-	retriever := memory.NewRetriever(
-		store,
+	ret := retrieval.NewRetriever(
+		memStore,
 		embClient,
 		queryClient,
 		embeddingModel,
@@ -218,12 +219,12 @@ func handleMemoryRetrieve(ctx context.Context, request mcp.CallToolRequest) (*mc
 	)
 
 	// Perform retrieval
-	response, err := retriever.Retrieve(ctx, query)
+	response, err := ret.Retrieve(ctx, query)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("retrieval failed: %v", err)), nil
 	}
 
 	// Format results
-	result := memory.FormatAsText(response)
+	result := retrieval.FormatAsText(response)
 	return mcp.NewToolResultText(result), nil
 }

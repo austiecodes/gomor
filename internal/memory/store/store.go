@@ -1,4 +1,4 @@
-package memory
+package store
 
 import (
 	"database/sql"
@@ -13,6 +13,29 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/austiecodes/goa/internal/consts"
+	"github.com/austiecodes/goa/internal/memory/memtypes"
+	"github.com/austiecodes/goa/internal/memory/memutils"
+)
+
+// Re-export types from memtypes for convenience
+type MemoryItem = memtypes.MemoryItem
+type MemorySource = memtypes.MemorySource
+type HistoryItem = memtypes.HistoryItem
+type SearchResult = memtypes.SearchResult
+type MemoryFTSResult = memtypes.MemoryFTSResult
+type HistorySearchResult = memtypes.HistorySearchResult
+
+const (
+	SourceExplicit  = memtypes.SourceExplicit
+	SourceExtracted = memtypes.SourceExtracted
+)
+
+// Re-export vector utils from memutils for convenience
+var (
+	NormalizeVector = memutils.NormalizeVector
+	DotProduct      = memutils.DotProduct
+	VectorToBytes   = memutils.VectorToBytes
+	BytesToVector   = memutils.BytesToVector
 )
 
 // Store manages memory and history persistence in SQLite.
@@ -433,4 +456,3 @@ func (s *Store) ClearMemories() error {
 	_, err := s.db.Exec("DELETE FROM memories")
 	return err
 }
-
