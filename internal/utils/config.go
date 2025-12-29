@@ -47,10 +47,7 @@ type ModelConfig struct {
 
 // FTS strategy constants
 const (
-	FTSStrategyDirect   = "direct"   // Tokenize raw query directly
-	FTSStrategySummary  = "summary"  // Use tool_model to summarize query first
-	FTSStrategyKeywords = "keywords" // Use tool_model to extract keywords
-	FTSStrategyAuto     = "auto"     // Try direct first, fallback to summary if few results
+	FTSStrategyAuto = "auto" // Try direct first, fallback to summary if few results
 )
 
 // MemoryConfig represents the memory/retrieval configuration
@@ -101,11 +98,11 @@ func DefaultConfig() *Config {
 			},
 		},
 		Memory: MemoryConfig{
-			MinSimilarity:    0.80,
+			MinSimilarity:    0.40,
 			MemoryTopK:       10,
 			HistoryTopK:      10,
 			MaxInjectedChars: 4000,
-			FTSStrategy:      FTSStrategyDirect,
+			FTSStrategy:      FTSStrategyAuto,
 		},
 		Debug: false,
 	}

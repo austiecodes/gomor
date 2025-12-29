@@ -100,7 +100,7 @@ func TestRetriever_EndToEnd_FakeClients(t *testing.T) {
 	// Relax thresholds for the test
 	cfg.Memory.MinSimilarity = 0.1
 	cfg.Memory.MemoryTopK = 10
-	cfg.Memory.FTSStrategy = utils.FTSStrategyDirect
+	cfg.Memory.FTSStrategy = utils.FTSStrategyAuto
 
 	// Ensure models are not nil (defaults are applied in LoadConfig, but guard anyway)
 	if cfg.Model.EmbeddingModel == nil {

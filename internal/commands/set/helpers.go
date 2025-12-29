@@ -119,7 +119,7 @@ func createModelList(models []string, mt ModelType) list.Model {
 }
 
 func createMemoryConfigInputs(config *utils.Config) []textinput.Model {
-	inputs := make([]textinput.Model, 4)
+	inputs := make([]textinput.Model, 3)
 
 	// Min Similarity input
 	inputs[0] = textinput.New()
@@ -141,17 +141,6 @@ func createMemoryConfigInputs(config *utils.Config) []textinput.Model {
 	inputs[2].CharLimit = 5
 	inputs[2].Width = 20
 	inputs[2].SetValue(formatInt(config.Memory.HistoryTopK))
-
-	// FTS Strategy input
-	inputs[3] = textinput.New()
-	inputs[3].Placeholder = "direct"
-	inputs[3].CharLimit = 20
-	inputs[3].Width = 20
-	if config.Memory.FTSStrategy != "" {
-		inputs[3].SetValue(config.Memory.FTSStrategy)
-	} else {
-		inputs[3].SetValue("direct")
-	}
 
 	return inputs
 }

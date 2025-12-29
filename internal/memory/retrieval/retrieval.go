@@ -213,23 +213,8 @@ func parseTransformResponse(response, originalQuery string) []string {
 
 // ftsSearch performs FTS based on the configured strategy.
 func (r *Retriever) ftsSearch(ctx context.Context, query string) ([]MemoryFTSResult, error) {
-	strategy := r.config.FTSStrategy
-	if strategy == "" {
-		strategy = utils.FTSStrategyDirect
-	}
-
-	switch strategy {
-	case utils.FTSStrategyDirect:
-		return r.ftsSearchDirect(query)
-	case utils.FTSStrategySummary:
-		return r.ftsSearchSummary(ctx, query)
-	case utils.FTSStrategyKeywords:
-		return r.ftsSearchKeywords(ctx, query)
-	case utils.FTSStrategyAuto:
-		return r.ftsSearchAuto(ctx, query)
-	default:
-		return r.ftsSearchDirect(query)
-	}
+	// Always use auto strategy as it's the only supported mode now
+	return r.ftsSearchAuto(ctx, query)
 }
 
 // ftsSearchDirect tokenizes the raw query and performs FTS.
@@ -272,52 +257,6 @@ Respond with ONLY the summary, no other text.`, query)
 	if ftsQuery == "" {
 		return nil, nil
 	}
-	return r.store.SearchMemoriesFTS(ftsQuery, r.config.MemoryTopK)
-}
-
-// ftsSearchKeywords uses tool_model to extract keywords, then performs FTS.
-func (r *Retriever) ftsSearchKeywords(ctx context.Context, query string) ([]MemoryFTSResult, error) {
-	if r.queryClient == nil {
-		return r.ftsSearchDirect(query)
-	}
-
-	prompt := fmt.Sprintf(`Extract 3-5 key search terms from this query:
-Query: %s
-
-Respond with ONLY comma-separated keywords, no other text.`, query)
-
-	stream, err := r.queryClient.ChatStream(ctx, r.toolModel, prompt)
-	if err != nil {
-		return r.ftsSearchDirect(query) // fallback
-	}
-	defer stream.Close()
-
-	var sb strings.Builder
-	for stream.Next() {
-		sb.WriteString(stream.GetChunk())
-	}
-
-	keywords := strings.TrimSpace(sb.String())
-	if keywords == "" {
-		return r.ftsSearchDirect(query)
-	}
-
-	// Parse keywords and build FTS query
-	parts := strings.Split(keywords, ",")
-	var terms []string
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		p = strings.ReplaceAll(p, "\"", "")
-		if p != "" {
-			terms = append(terms, p)
-		}
-	}
-
-	if len(terms) == 0 {
-		return r.ftsSearchDirect(query)
-	}
-
-	ftsQuery := strings.Join(terms, " OR ")
 	return r.store.SearchMemoriesFTS(ftsQuery, r.config.MemoryTopK)
 }
 

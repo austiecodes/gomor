@@ -209,17 +209,9 @@ func (m *Model) updateMemoryConfig(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return *m, nil
 			}
 
-			ftsStrategy := strings.TrimSpace(m.TextInputs[3].Value())
-			validStrategies := map[string]bool{"direct": true, "summary": true, "keywords": true, "auto": true}
-			if !validStrategies[ftsStrategy] {
-				m.Err = fmt.Errorf("fts_strategy must be one of: direct, summary, keywords, auto")
-				return *m, nil
-			}
-
 			m.Config.Memory.MinSimilarity = minSim
 			m.Config.Memory.MemoryTopK = memTopK
 			m.Config.Memory.HistoryTopK = histTopK
-			m.Config.Memory.FTSStrategy = ftsStrategy
 
 			return *m, saveConfig(m.Config)
 		}
@@ -309,7 +301,6 @@ func (m *Model) renderView() string {
 			"Min Similarity (0.0-1.0, default: 0.80)",
 			"Memory Top K (default: 10)",
 			"History Top K (default: 10)",
-			"FTS Strategy (direct/summary/keywords/auto)",
 		}
 		for i, input := range m.TextInputs {
 			s.WriteString(InputLabelStyle.Render(labels[i]))
