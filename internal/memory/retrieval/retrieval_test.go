@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/types"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/types"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 // fakeEmbeddingClient returns deterministic vectors based on input text.
@@ -191,7 +191,7 @@ func TestRetriever_RealClients_Debug(t *testing.T) {
 	fmt.Println()
 
 	if cfg.Model.EmbeddingModel == nil {
-		t.Fatal("embedding_model not configured. Run 'goa set' first.")
+		t.Fatal("embedding_model not configured. Run 'gomor set' first.")
 	}
 
 	// Open real store
@@ -208,7 +208,7 @@ func TestRetriever_RealClients_Debug(t *testing.T) {
 		t.Fatalf("get all memories: %v", err)
 	}
 	if len(memories) == 0 {
-		fmt.Println("No memories in store. Add some with 'goa memory' or goa_memory_save first.")
+		fmt.Println("No memories in store. Add some with 'gomor memory' or goa_memory_save first.")
 	} else {
 		for i, m := range memories {
 			fmt.Printf("%d) ID=%s Text=%s Tags=%v\n", i+1, m.ID[:8], m.Text, m.Tags)

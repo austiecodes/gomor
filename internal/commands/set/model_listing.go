@@ -5,8 +5,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 func loadModelsForProvider(providerID string, cfg *utils.Config) tea.Cmd {

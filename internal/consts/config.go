@@ -1,7 +1,7 @@
 package consts
 
 const (
-	GoaDir     = ".ohmygoa"
+	GoaDir     = ".gomor"
 	HistoryDir = "history"
 	LogsDir    = "logs"
 )

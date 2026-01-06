@@ -1,9 +1,9 @@
 package commands
 
 import (
-	mcpcmd "github.com/austiecodes/goa/internal/commands/mcp"
-	memorycmd "github.com/austiecodes/goa/internal/commands/memory"
-	setcmd "github.com/austiecodes/goa/internal/commands/set"
+	mcpcmd "github.com/austiecodes/gomor/internal/commands/mcp"
+	memorycmd "github.com/austiecodes/gomor/internal/commands/memory"
+	setcmd "github.com/austiecodes/gomor/internal/commands/set"
 )
 
 func init() {

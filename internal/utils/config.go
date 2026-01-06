@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/austiecodes/goa/internal/consts"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/consts"
+	"github.com/austiecodes/gomor/internal/types"
 	"github.com/openai/openai-go/v3"
 )
 
@@ -116,9 +116,9 @@ func GetConfigPath() (string, error) {
 	}
 	goaDir := filepath.Join(homeDir, consts.GoaDir)
 	if err := os.MkdirAll(goaDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create goa directory: %v", err)
+		return "", fmt.Errorf("failed to create gomor directory: %v", err)
 	}
-	return filepath.Join(goaDir, ".goa"), nil
+	return filepath.Join(goaDir, ".gomor"), nil
 }
 
 // LoadConfig loads the configuration from file

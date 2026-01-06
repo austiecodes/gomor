@@ -3,10 +3,10 @@ package set
 import (
 	"context"
 
-	"github.com/austiecodes/goa/internal/memory/retrieval"
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/types"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/memory/retrieval"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/types"
+	"github.com/austiecodes/gomor/internal/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -6,8 +6,8 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
 	"github.com/anthropics/anthropic-sdk-go/packages/ssestream"
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 // Message is a wrapper around Anthropic's MessageParam.

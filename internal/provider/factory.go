@@ -3,12 +3,12 @@ package provider
 import (
 	"fmt"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/consts"
-	anthropicprov "github.com/austiecodes/goa/internal/provider/anthropic"
-	googleprov "github.com/austiecodes/goa/internal/provider/google"
-	openaiprov "github.com/austiecodes/goa/internal/provider/openai"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/consts"
+	anthropicprov "github.com/austiecodes/gomor/internal/provider/anthropic"
+	googleprov "github.com/austiecodes/gomor/internal/provider/google"
+	openaiprov "github.com/austiecodes/gomor/internal/provider/openai"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 func NewQueryClient(cfg *utils.Config, providerName string) (client.QueryClient, error) {

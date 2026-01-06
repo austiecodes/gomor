@@ -6,8 +6,8 @@ import (
 	"iter"
 	"strings"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/types"
 	"google.golang.org/genai"
 )
 

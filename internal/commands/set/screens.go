@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/austiecodes/goa/internal/consts"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/consts"
+	"github.com/austiecodes/gomor/internal/types"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

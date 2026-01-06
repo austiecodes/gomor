@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/memory/store"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/memory/store"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 // ReindexMemories re-calculates embeddings for all memories using the new model.

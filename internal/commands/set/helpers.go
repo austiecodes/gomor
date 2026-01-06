@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/austiecodes/goa/internal/consts"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/consts"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 func createMainMenu() list.Model {
@@ -25,7 +25,7 @@ func createMainMenu() list.Model {
 
 	delegate := list.NewDefaultDelegate()
 	l := list.New(items, delegate, 60, 30)
-	l.Title = "Goa Settings"
+	l.Title = "gomor Settings"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(true)

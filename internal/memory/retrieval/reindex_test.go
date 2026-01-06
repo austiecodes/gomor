@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/austiecodes/goa/internal/memory/store"
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/memory/store"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/utils"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )

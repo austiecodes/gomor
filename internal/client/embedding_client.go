@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 // EmbeddingClient is the interface for generating embeddings from text.
@@ -17,4 +17,3 @@ type EmbeddingClient interface {
 	// Dimensions returns the embedding dimension for the given model.
 	Dimensions(model types.Model) int
 }
-

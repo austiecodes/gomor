@@ -1,8 +1,8 @@
 package set
 
 import (
-	"github.com/austiecodes/goa/internal/types"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/types"
+	"github.com/austiecodes/gomor/internal/utils"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 )

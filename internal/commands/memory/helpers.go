@@ -9,11 +9,11 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/austiecodes/goa/internal/memory/memtypes"
-	"github.com/austiecodes/goa/internal/memory/memutils"
-	"github.com/austiecodes/goa/internal/memory/store"
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/memory/memtypes"
+	"github.com/austiecodes/gomor/internal/memory/memutils"
+	"github.com/austiecodes/gomor/internal/memory/store"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 func createMemoryList(memories []memtypes.MemoryItem, width, height int) list.Model {

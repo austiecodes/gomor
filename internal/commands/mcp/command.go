@@ -10,19 +10,19 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/spf13/cobra"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/memory/retrieval"
-	"github.com/austiecodes/goa/internal/memory/store"
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/types"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/memory/retrieval"
+	"github.com/austiecodes/gomor/internal/memory/store"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/types"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 // McpCmd is the command to start the MCP server
 var McpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Start the MCP server over stdio",
-	Long:  `Start a Model Context Protocol (MCP) server that communicates over stdio. This allows goa to be used as an MCP tool provider.`,
+	Long:  `Start a Model Context Protocol (MCP) server that communicates over stdio. This allows gomor to be used as an MCP tool provider.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runMcpServer(); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
@@ -34,7 +34,7 @@ var McpCmd = &cobra.Command{
 func runMcpServer() error {
 	// Create the MCP server
 	s := server.NewMCPServer(
-		"goa",
+		"gomor",
 		"1.0.0",
 		server.WithToolCapabilities(true),
 	)
@@ -114,7 +114,7 @@ func handleMemorySave(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 	}
 
 	if config.Model.EmbeddingModel == nil {
-		return mcp.NewToolResultError("embedding model not configured. Run 'goa set' to configure"), nil
+		return mcp.NewToolResultError("embedding model not configured. Run 'gomor set' to configure"), nil
 	}
 
 	// Create embedding client
@@ -183,7 +183,7 @@ func handleMemoryRetrieve(ctx context.Context, request mcp.CallToolRequest) (*mc
 	}
 
 	if config.Model.EmbeddingModel == nil {
-		return mcp.NewToolResultError("embedding model not configured. Run 'goa set' to configure"), nil
+		return mcp.NewToolResultError("embedding model not configured. Run 'gomor set' to configure"), nil
 	}
 
 	// Open memory store

@@ -9,7 +9,7 @@ import (
 
 var SetCmd = &cobra.Command{
 	Use:   "set",
-	Short: "Configure goa settings interactively",
+	Short: "Configure gomor settings interactively",
 	Long:  `Open an interactive TUI to configure provider settings and model selections.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		p := tea.NewProgram(initialModel(), tea.WithAltScreen())

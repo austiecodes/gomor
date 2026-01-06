@@ -8,14 +8,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/austiecodes/goa/internal/provider"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/provider"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "goa",
-	Short: "Goa is a command-line tool for interacting with LLM APIs",
-	Long:  `Goa is a command-line tool for interacting with LLM APIs.`,
+	Use:   "gomor",
+	Short: "gomor is a command-line tool for interacting with LLM APIs",
+	Long:  `gomor is a command-line tool for interacting with LLM APIs.`,
 	Args:  cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
@@ -51,7 +51,7 @@ func runQuery(query string) error {
 	}
 
 	if config.Model.ChatModel == nil {
-		return fmt.Errorf("chat model not configured. Run 'goa set' to configure your model")
+		return fmt.Errorf("chat model not configured. Run 'gomor set' to configure your model")
 	}
 
 	model := *config.Model.ChatModel

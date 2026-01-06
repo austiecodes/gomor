@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 type QueryClient struct {

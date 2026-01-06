@@ -7,12 +7,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/memory/memtypes"
-	"github.com/austiecodes/goa/internal/memory/memutils"
-	"github.com/austiecodes/goa/internal/memory/store"
-	"github.com/austiecodes/goa/internal/types"
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/memory/memtypes"
+	"github.com/austiecodes/gomor/internal/memory/memutils"
+	"github.com/austiecodes/gomor/internal/memory/store"
+	"github.com/austiecodes/gomor/internal/types"
+	"github.com/austiecodes/gomor/internal/utils"
 )
 
 // Re-export types for convenience

@@ -1,4 +1,4 @@
-module github.com/austiecodes/goa
+module github.com/austiecodes/gomor
 
 go 1.24.0
 

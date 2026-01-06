@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/austiecodes/goa/internal/commands"
+	"github.com/austiecodes/gomor/internal/commands"
 )
 
 func main() {
 	commands.Execute()
 }
-

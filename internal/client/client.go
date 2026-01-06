@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 type Message interface {

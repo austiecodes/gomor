@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 
-	"github.com/austiecodes/goa/internal/memory/memtypes"
+	"github.com/austiecodes/gomor/internal/memory/memtypes"
 )
 
 // Screen represents the current TUI screen

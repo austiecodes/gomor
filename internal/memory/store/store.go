@@ -15,9 +15,9 @@ import (
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 
-	"github.com/austiecodes/goa/internal/consts"
-	"github.com/austiecodes/goa/internal/memory/memtypes"
-	"github.com/austiecodes/goa/internal/memory/memutils"
+	"github.com/austiecodes/gomor/internal/consts"
+	"github.com/austiecodes/gomor/internal/memory/memtypes"
+	"github.com/austiecodes/gomor/internal/memory/memutils"
 )
 
 //go:embed sql/schema.sql
@@ -128,7 +128,7 @@ func getDBPath() (string, error) {
 
 	goaDir := filepath.Join(homeDir, consts.GoaDir)
 	if err := os.MkdirAll(goaDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create goa directory: %w", err)
+		return "", fmt.Errorf("failed to create gomor directory: %w", err)
 	}
 
 	return filepath.Join(goaDir, "memory.db"), nil

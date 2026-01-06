@@ -7,8 +7,8 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/packages/param"
 
-	"github.com/austiecodes/goa/internal/client"
-	"github.com/austiecodes/goa/internal/types"
+	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/types"
 )
 
 // EmbeddingClient wraps OpenAI client for embedding operations.
@@ -98,4 +98,3 @@ func (e *EmbeddingClient) Dimensions(model types.Model) int {
 		return 1536
 	}
 }
-

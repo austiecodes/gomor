@@ -1,7 +1,7 @@
 package set
 
 import (
-	"github.com/austiecodes/goa/internal/utils"
+	"github.com/austiecodes/gomor/internal/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
