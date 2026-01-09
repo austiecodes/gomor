@@ -10,10 +10,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/austiecodes/gomor/internal/memory/memtypes"
-	"github.com/austiecodes/gomor/internal/memory/memutils"
+	memoryservice "github.com/austiecodes/gomor/internal/memory/service"
 	"github.com/austiecodes/gomor/internal/memory/store"
-	"github.com/austiecodes/gomor/internal/provider"
-	"github.com/austiecodes/gomor/internal/utils"
 )
 
 func createMemoryList(memories []memtypes.MemoryItem, width, height int) list.Model {
@@ -86,83 +84,16 @@ func loadMemories() tea.Cmd {
 
 func saveNewMemory(text string, tags []string) tea.Cmd {
 	return func() tea.Msg {
-		config, err := utils.LoadConfig()
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		if config.Model.EmbeddingModel == nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Create embedding client
-		embeddingModel := *config.Model.EmbeddingModel
-		embClient, err := provider.NewEmbeddingClient(config, embeddingModel.Provider)
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Generate embedding
-		ctx := context.Background()
-		embedding, err := embClient.Embed(ctx, embeddingModel, text)
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Normalize embedding
-		normalizedEmbedding := memutils.NormalizeVector(embedding)
-
-		// Open store and save
-		memStore, err := store.NewStore()
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-		defer memStore.Close()
-
-		item := &memtypes.MemoryItem{
-			Text:      text,
-			Tags:      tags,
-			Source:    memtypes.SourceExplicit,
-			Provider:  embeddingModel.Provider,
-			ModelID:   embeddingModel.ModelID,
-			Dim:       len(normalizedEmbedding),
-			Embedding: normalizedEmbedding,
-		}
-
-		err = memStore.SaveMemory(item)
+		_, err := memoryservice.Save(context.Background(), memoryservice.SaveInput{
+			Text: text,
+			Tags: tags,
+		})
 		return MemorySavedMsg{Err: err}
 	}
 }
 
 func updateMemory(id, text string, tags []string) tea.Cmd {
 	return func() tea.Msg {
-		config, err := utils.LoadConfig()
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		if config.Model.EmbeddingModel == nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Create embedding client
-		embeddingModel := *config.Model.EmbeddingModel
-		embClient, err := provider.NewEmbeddingClient(config, embeddingModel.Provider)
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Generate new embedding
-		ctx := context.Background()
-		embedding, err := embClient.Embed(ctx, embeddingModel, text)
-		if err != nil {
-			return MemorySavedMsg{Err: err}
-		}
-
-		// Normalize embedding
-		normalizedEmbedding := memutils.NormalizeVector(embedding)
-
-		// Open store
 		memStore, err := store.NewStore()
 		if err != nil {
 			return MemorySavedMsg{Err: err}
@@ -171,18 +102,10 @@ func updateMemory(id, text string, tags []string) tea.Cmd {
 
 		// Delete old and save new (simple update strategy)
 		_ = memStore.DeleteMemory(id)
-
-		item := &memtypes.MemoryItem{
-			Text:      text,
-			Tags:      tags,
-			Source:    memtypes.SourceExplicit,
-			Provider:  embeddingModel.Provider,
-			ModelID:   embeddingModel.ModelID,
-			Dim:       len(normalizedEmbedding),
-			Embedding: normalizedEmbedding,
-		}
-
-		err = memStore.SaveMemory(item)
+		_, err = memoryservice.Save(context.Background(), memoryservice.SaveInput{
+			Text: text,
+			Tags: tags,
+		})
 		return MemorySavedMsg{Err: err}
 	}
 }

@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/austiecodes/gomor/internal/memory/store"
-	"github.com/austiecodes/gomor/internal/provider"
-	"github.com/austiecodes/gomor/internal/utils"
+	memoryservice "github.com/austiecodes/gomor/internal/memory/service"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -42,56 +40,16 @@ func handleMemorySave(ctx context.Context, request *mcp.CallToolRequest, input M
 		}
 	}
 
-	// Load config for embedding
-	config, err := utils.LoadConfig()
+	result, err := memoryservice.Save(ctx, memoryservice.SaveInput{
+		Text: text,
+		Tags: tags,
+	})
 	if err != nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if config.Model.EmbeddingModel == nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("embedding model not configured. Run 'gomor set' to configure")
-	}
-
-	// Create embedding client
-	embeddingModel := *config.Model.EmbeddingModel
-	embClient, err := provider.NewEmbeddingClient(config, embeddingModel.Provider)
-	if err != nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("failed to create embedding client: %w", err)
-	}
-
-	// Generate embedding
-	embedding, err := embClient.Embed(ctx, embeddingModel, text)
-	if err != nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("failed to generate embedding: %w", err)
-	}
-
-	// Normalize embedding for cosine similarity
-	normalizedEmbedding := store.NormalizeVector(embedding)
-
-	// Open memory store
-	memStore, err := store.NewStore()
-	if err != nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("failed to open memory store: %w", err)
-	}
-	defer memStore.Close()
-
-	// Save memory
-	item := &store.MemoryItem{
-		Text:      text,
-		Tags:      tags,
-		Source:    store.SourceExplicit,
-		Provider:  embeddingModel.Provider,
-		ModelID:   embeddingModel.ModelID,
-		Dim:       len(normalizedEmbedding),
-		Embedding: normalizedEmbedding,
-	}
-
-	if err := memStore.SaveMemory(item); err != nil {
-		return nil, MemorySaveOutput{}, fmt.Errorf("failed to save memory: %w", err)
+		return nil, MemorySaveOutput{}, err
 	}
 
 	return nil, MemorySaveOutput{
-		Message: fmt.Sprintf("Memory saved successfully (id: %s)", item.ID),
-		ID:      item.ID,
+		Message: fmt.Sprintf("Memory saved successfully (id: %s)", result.Item.ID),
+		ID:      result.Item.ID,
 	}, nil
 }
