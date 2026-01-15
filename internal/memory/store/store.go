@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 
+	"github.com/austiecodes/gomor/internal/memory/decay"
 	"github.com/austiecodes/gomor/internal/memory/memtypes"
 	"github.com/austiecodes/gomor/internal/memory/memutils"
 	"github.com/austiecodes/gomor/internal/utils"
@@ -87,6 +88,108 @@ func (s *Store) initSchema() error {
 	if _, err := s.db.Exec(schemaSQL); err != nil {
 		return fmt.Errorf("failed to initialize schema: %w", err)
 	}
+	if err := s.ensureMemoryColumns(); err != nil {
+		return err
+	}
+	if err := s.rebuildFTSIndexes(); err != nil {
+		return err
+	}
+	if err := s.backfillMemoryDecayFields(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) ensureMemoryColumns() error {
+	columns, err := s.memoryColumns()
+	if err != nil {
+		return fmt.Errorf("failed to inspect memory schema: %w", err)
+	}
+
+	if !columns["confidence"] {
+		if _, err := s.db.Exec(`ALTER TABLE memories ADD COLUMN confidence REAL NOT NULL DEFAULT 0;`); err != nil {
+			return fmt.Errorf("failed to add memories.confidence column: %w", err)
+		}
+	}
+	if !columns["stability_days"] {
+		if _, err := s.db.Exec(`ALTER TABLE memories ADD COLUMN stability_days REAL NOT NULL DEFAULT 0;`); err != nil {
+			return fmt.Errorf("failed to add memories.stability_days column: %w", err)
+		}
+	}
+	if !columns["last_retrieved_at"] {
+		if _, err := s.db.Exec(`ALTER TABLE memories ADD COLUMN last_retrieved_at INTEGER;`); err != nil {
+			return fmt.Errorf("failed to add memories.last_retrieved_at column: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) memoryColumns() (map[string]bool, error) {
+	rows, err := s.db.Query(`PRAGMA table_info(memories)`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	columns := make(map[string]bool)
+	for rows.Next() {
+		var (
+			cid        int
+			name       string
+			columnType string
+			notNull    int
+			defaultVal sql.NullString
+			primaryKey int
+		)
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultVal, &primaryKey); err != nil {
+			return nil, err
+		}
+		columns[name] = true
+	}
+
+	return columns, rows.Err()
+}
+
+func (s *Store) backfillMemoryDecayFields() error {
+	if _, err := s.db.Exec(
+		`UPDATE memories
+		 SET confidence = CASE
+		     WHEN source = ? THEN ?
+		     ELSE ?
+		 END
+		 WHERE confidence IS NULL OR confidence <= 0`,
+		string(SourceExplicit),
+		decay.DefaultConfidence(SourceExplicit),
+		decay.DefaultConfidence(SourceExtracted),
+	); err != nil {
+		return fmt.Errorf("failed to backfill memory confidence: %w", err)
+	}
+
+	if _, err := s.db.Exec(
+		`UPDATE memories
+		 SET stability_days = CASE
+		     WHEN source = ? THEN ?
+		     ELSE ?
+		 END
+		 WHERE stability_days IS NULL OR stability_days <= 0`,
+		string(SourceExplicit),
+		decay.DefaultStabilityDays(SourceExplicit),
+		decay.DefaultStabilityDays(SourceExtracted),
+	); err != nil {
+		return fmt.Errorf("failed to backfill memory stability days: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Store) rebuildFTSIndexes() error {
+	if _, err := s.db.Exec(`INSERT INTO memories_fts(memories_fts) VALUES('rebuild');`); err != nil {
+		return fmt.Errorf("failed to rebuild memories FTS index: %w", err)
+	}
+	if _, err := s.db.Exec(`INSERT INTO history_fts(history_fts) VALUES('rebuild');`); err != nil {
+		return fmt.Errorf("failed to rebuild history FTS index: %w", err)
+	}
 	return nil
 }
 
@@ -98,6 +201,12 @@ func (s *Store) SaveMemory(item *MemoryItem) error {
 	if item.CreatedAt.IsZero() {
 		item.CreatedAt = time.Now()
 	}
+	if item.Confidence <= 0 {
+		item.Confidence = decay.DefaultConfidence(item.Source)
+	}
+	if item.StabilityDays <= 0 {
+		item.StabilityDays = decay.DefaultStabilityDays(item.Source)
+	}
 
 	tagsJSON, err := json.Marshal(item.Tags)
 	if err != nil {
@@ -105,10 +214,15 @@ func (s *Store) SaveMemory(item *MemoryItem) error {
 	}
 
 	embeddingBytes := VectorToBytes(item.Embedding)
+	var lastRetrievedAt any
+	if item.LastRetrievedAt != nil {
+		lastRetrievedAt = item.LastRetrievedAt.Unix()
+	}
 
 	_, err = s.db.Exec(insertMemorySQL,
 		item.ID, item.Text, string(tagsJSON), string(item.Source),
-		item.CreatedAt.Unix(), item.Provider, item.ModelID, item.Dim, embeddingBytes)
+		item.CreatedAt.Unix(), item.Confidence, item.StabilityDays, lastRetrievedAt,
+		item.Provider, item.ModelID, item.Dim, embeddingBytes)
 
 	if err != nil {
 		return fmt.Errorf("failed to save memory: %w", err)
@@ -140,17 +254,23 @@ func (s *Store) GetAllMemories() ([]MemoryItem, error) {
 		var item MemoryItem
 		var tagsJSON string
 		var createdAtUnix int64
+		var lastRetrievedAtUnix sql.NullInt64
 		var embeddingBytes []byte
 		var source string
 
 		err := rows.Scan(&item.ID, &item.Text, &tagsJSON, &source,
-			&createdAtUnix, &item.Provider, &item.ModelID, &item.Dim, &embeddingBytes)
+			&createdAtUnix, &item.Confidence, &item.StabilityDays, &lastRetrievedAtUnix,
+			&item.Provider, &item.ModelID, &item.Dim, &embeddingBytes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan memory row: %w", err)
 		}
 
 		item.Source = MemorySource(source)
 		item.CreatedAt = time.Unix(createdAtUnix, 0)
+		if lastRetrievedAtUnix.Valid {
+			lastRetrievedAt := time.Unix(lastRetrievedAtUnix.Int64, 0)
+			item.LastRetrievedAt = &lastRetrievedAt
+		}
 		item.Embedding = BytesToVector(embeddingBytes)
 
 		if err := json.Unmarshal([]byte(tagsJSON), &item.Tags); err != nil {
@@ -200,10 +320,37 @@ func (s *Store) SearchMemories(queryEmbedding []float32, topK int, minSimilarity
 	return results, nil
 }
 
+// UpdateMemoryDecay updates confidence, stability, and retrieval time for a memory.
+func (s *Store) UpdateMemoryDecay(id string, confidence float64, stabilityDays float64, lastRetrievedAt *time.Time) error {
+	var lastRetrievedAtUnix any
+	if lastRetrievedAt != nil {
+		lastRetrievedAtUnix = lastRetrievedAt.Unix()
+	}
+
+	_, err := s.db.Exec(updateMemoryDecaySQL, confidence, stabilityDays, lastRetrievedAtUnix, id)
+	if err != nil {
+		return fmt.Errorf("failed to update memory decay: %w", err)
+	}
+	return nil
+}
+
 // DeleteMemory deletes a memory by ID.
 func (s *Store) DeleteMemory(id string) error {
-	_, err := s.db.Exec(deleteMemorySQL, id)
+	_, err := s.DeleteMemoryByID(id)
 	return err
+}
+
+// DeleteMemoryByID deletes a memory by ID and reports whether a row was removed.
+func (s *Store) DeleteMemoryByID(id string) (bool, error) {
+	result, err := s.db.Exec(deleteMemorySQL, id)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected > 0, nil
 }
 
 // SearchMemoriesFTS performs full-text search on memory text.
@@ -221,11 +368,13 @@ func (s *Store) SearchMemoriesFTS(query string, topK int) ([]MemoryFTSResult, er
 		var result MemoryFTSResult
 		var tagsJSON string
 		var createdAtUnix int64
+		var lastRetrievedAtUnix sql.NullInt64
 		var embeddingBytes []byte
 		var source string
 
 		err := rows.Scan(&item.ID, &item.Text, &tagsJSON, &source,
-			&createdAtUnix, &item.Provider, &item.ModelID, &item.Dim, &embeddingBytes,
+			&createdAtUnix, &item.Confidence, &item.StabilityDays, &lastRetrievedAtUnix,
+			&item.Provider, &item.ModelID, &item.Dim, &embeddingBytes,
 			&result.Snippet, &result.Rank)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan memory FTS row: %w", err)
@@ -233,6 +382,10 @@ func (s *Store) SearchMemoriesFTS(query string, topK int) ([]MemoryFTSResult, er
 
 		item.Source = MemorySource(source)
 		item.CreatedAt = time.Unix(createdAtUnix, 0)
+		if lastRetrievedAtUnix.Valid {
+			lastRetrievedAt := time.Unix(lastRetrievedAtUnix.Int64, 0)
+			item.LastRetrievedAt = &lastRetrievedAt
+		}
 		item.Embedding = BytesToVector(embeddingBytes)
 
 		if err := json.Unmarshal([]byte(tagsJSON), &item.Tags); err != nil {

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/austiecodes/gomor/internal/memory/retrieval"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -76,6 +77,46 @@ func TestHandleMemoryRetrieve_EmptyQuery(t *testing.T) {
 	_, _, err = handleMemoryRetrieve(ctx, request, input)
 	if err == nil {
 		t.Fatal("expected error for whitespace-only query, got nil")
+	}
+}
+
+func TestHandleMemoryDelete_EmptyID(t *testing.T) {
+	ctx := context.Background()
+	request := &mcp.CallToolRequest{}
+
+	_, _, err := handleMemoryDelete(ctx, request, MemoryDeleteInput{ID: "   "})
+	if err == nil {
+		t.Fatal("expected error for empty id, got nil")
+	}
+	if !strings.Contains(err.Error(), "non-empty string") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+}
+
+func TestBuildRetrieveMatches(t *testing.T) {
+	resp := &retrieval.RetrievalResponse{
+		Results: []retrieval.UnifiedResult{
+			{
+				Item: retrieval.MemoryItem{
+					ID:   "mem-1",
+					Text: "remember me",
+					Tags: []string{"tag1"},
+				},
+				Score:  0.88,
+				Source: "vector",
+			},
+		},
+	}
+
+	matches := buildRetrieveMatches(resp)
+	if len(matches) != 1 {
+		t.Fatalf("expected 1 match, got %d", len(matches))
+	}
+	if matches[0].ID != "mem-1" {
+		t.Fatalf("unexpected id: %s", matches[0].ID)
+	}
+	if matches[0].Score != 0.88 {
+		t.Fatalf("unexpected score: %.2f", matches[0].Score)
 	}
 }
 

@@ -39,7 +39,8 @@ type DeleteInput struct {
 }
 
 type DeleteResult struct {
-	ID string
+	ID      string
+	Deleted bool
 }
 
 func Save(ctx context.Context, input SaveInput) (*SaveResult, error) {
@@ -157,11 +158,12 @@ func Delete(ctx context.Context, input DeleteInput) (*DeleteResult, error) {
 	}
 	defer memStore.Close()
 
-	if err := memStore.DeleteMemory(id); err != nil {
+	deleted, err := memStore.DeleteMemoryByID(id)
+	if err != nil {
 		return nil, fmt.Errorf("failed to delete memory: %w", err)
 	}
 
-	return &DeleteResult{ID: id}, nil
+	return &DeleteResult{ID: id, Deleted: deleted}, nil
 }
 
 func buildQueryClient(config *utils.Config) (client.QueryClient, types.Model) {

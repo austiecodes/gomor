@@ -46,6 +46,13 @@ func runMcpServer() error {
 	}
 	mcp.AddTool(server, memoryRetrieveTool, handleMemoryRetrieve)
 
+	// Register the memory_delete tool
+	memoryDeleteTool := &mcp.Tool{
+		Name:        "memory_delete",
+		Description: "Delete an incorrect or obsolete memory by ID.",
+	}
+	mcp.AddTool(server, memoryDeleteTool, handleMemoryDelete)
+
 	// Start the stdio server
 	ctx := context.Background()
 	return server.Run(ctx, &mcp.StdioTransport{})

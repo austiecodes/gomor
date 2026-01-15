@@ -17,6 +17,8 @@ var (
 	deleteMemorySQL string
 	//go:embed sql/queries/update_memory_embedding.sql
 	updateMemoryEmbeddingSQL string
+	//go:embed sql/queries/update_memory_decay.sql
+	updateMemoryDecaySQL string
 	//go:embed sql/queries/search_memories_fts.sql
 	searchMemoriesFTSSQL string
 	//go:embed sql/queries/clear_memories.sql

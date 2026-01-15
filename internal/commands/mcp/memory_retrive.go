@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/austiecodes/gomor/internal/memory/retrieval"
 	memoryservice "github.com/austiecodes/gomor/internal/memory/service"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -16,7 +17,16 @@ type MemoryRetrieveInput struct {
 
 // MemoryRetrieveOutput defines the output schema for the memory retrieve tool
 type MemoryRetrieveOutput struct {
-	Results string `json:"results" jsonschema:"formatted text containing retrieved memories"`
+	Results string                `json:"results" jsonschema:"formatted text containing retrieved memories"`
+	Matches []MemoryRetrieveMatch `json:"matches,omitempty" jsonschema:"structured retrieved memories"`
+}
+
+type MemoryRetrieveMatch struct {
+	ID     string   `json:"id" jsonschema:"memory id"`
+	Text   string   `json:"text" jsonschema:"memory text"`
+	Tags   []string `json:"tags,omitempty" jsonschema:"memory tags"`
+	Score  float64  `json:"score" jsonschema:"final ranking score"`
+	Source string   `json:"source" jsonschema:"retrieval source"`
 }
 
 // handleMemoryRetrieve handles the goa_memory_retrieve tool call (unified hybrid search)
@@ -33,5 +43,24 @@ func handleMemoryRetrieve(ctx context.Context, request *mcp.CallToolRequest, inp
 	}
 	return nil, MemoryRetrieveOutput{
 		Results: result.Text,
+		Matches: buildRetrieveMatches(result.Response),
 	}, nil
+}
+
+func buildRetrieveMatches(resp *retrieval.RetrievalResponse) []MemoryRetrieveMatch {
+	if resp == nil {
+		return nil
+	}
+
+	matches := make([]MemoryRetrieveMatch, 0, len(resp.Results))
+	for _, result := range resp.Results {
+		matches = append(matches, MemoryRetrieveMatch{
+			ID:     result.Item.ID,
+			Text:   result.Item.Text,
+			Tags:   result.Item.Tags,
+			Score:  result.Score,
+			Source: result.Source,
+		})
+	}
+	return matches
 }

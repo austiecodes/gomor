@@ -14,15 +14,18 @@ const (
 
 // MemoryItem represents a single preference/fact stored in memory.
 type MemoryItem struct {
-	ID        string       `json:"id"`
-	Text      string       `json:"text"`
-	Tags      []string     `json:"tags,omitempty"`
-	Source    MemorySource `json:"source"`
-	CreatedAt time.Time    `json:"created_at"`
-	Provider  string       `json:"provider"`
-	ModelID   string       `json:"model_id"`
-	Dim       int          `json:"dim"`
-	Embedding []float32    `json:"-"` // stored as blob, not JSON
+	ID              string       `json:"id"`
+	Text            string       `json:"text"`
+	Tags            []string     `json:"tags,omitempty"`
+	Source          MemorySource `json:"source"`
+	CreatedAt       time.Time    `json:"created_at"`
+	Confidence      float64      `json:"confidence"`
+	StabilityDays   float64      `json:"stability_days"`
+	LastRetrievedAt *time.Time   `json:"last_retrieved_at,omitempty"`
+	Provider        string       `json:"provider"`
+	ModelID         string       `json:"model_id"`
+	Dim             int          `json:"dim"`
+	Embedding       []float32    `json:"-"` // stored as blob, not JSON
 }
 
 // HistoryItem represents a conversation turn stored in history.
@@ -58,7 +61,9 @@ type HistorySearchResult struct {
 // Used for fusion and ranking across different retrieval methods.
 type UnifiedResult struct {
 	Item        MemoryItem `json:"item"`
-	Score       float64    `json:"score"`        // normalized score (0-1, higher is better)
+	Score       float64    `json:"score"`        // final score after applying freshness + confidence
+	BaseScore   float64    `json:"base_score"`   // hybrid relevance score before decay adjustments
+	Freshness   float64    `json:"freshness"`    // recency factor derived from last retrieval time
 	Source      string     `json:"source"`       // "vector", "fts", or "both"
 	VectorScore float64    `json:"vector_score"` // original vector similarity
 	FTSRank     float64    `json:"fts_rank"`     // original FTS rank

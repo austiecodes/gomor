@@ -6,8 +6,10 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/austiecodes/gomor/internal/client"
+	"github.com/austiecodes/gomor/internal/memory/decay"
 	"github.com/austiecodes/gomor/internal/memory/memtypes"
 	"github.com/austiecodes/gomor/internal/memory/memutils"
 	"github.com/austiecodes/gomor/internal/memory/store"
@@ -100,7 +102,9 @@ func (r *Retriever) Retrieve(ctx context.Context, query string) (*RetrievalRespo
 	}
 
 	// Fuse results
-	unified := r.fuseResults(vectorResults, ftsResults)
+	now := time.Now().UTC()
+	unified := r.fuseResults(vectorResults, ftsResults, now)
+	r.reinforceTopResult(unified, now)
 
 	return &RetrievalResponse{
 		Results: unified,
@@ -333,7 +337,7 @@ func tokenizeForFTS(query string) string {
 }
 
 // fuseResults combines vector and FTS results into a unified ranked list.
-func (r *Retriever) fuseResults(vectorResults []SearchResult, ftsResults []MemoryFTSResult) []UnifiedResult {
+func (r *Retriever) fuseResults(vectorResults []SearchResult, ftsResults []MemoryFTSResult, now time.Time) []UnifiedResult {
 	// Build a map of results by ID
 	resultMap := make(map[string]*UnifiedResult)
 
@@ -366,7 +370,9 @@ func (r *Retriever) fuseResults(vectorResults []SearchResult, ftsResults []Memor
 	// Calculate unified scores and convert to slice
 	var results []UnifiedResult
 	for _, ur := range resultMap {
-		ur.Score = calculateUnifiedScore(ur)
+		ur.BaseScore = calculateUnifiedScore(ur)
+		ur.Freshness = decay.Freshness(now, decay.EffectiveLastRetrievedAt(ur.Item), ur.Item.StabilityDays)
+		ur.Score = decay.FinalScore(ur.BaseScore, ur.Freshness, ur.Item.Confidence)
 		results = append(results, *ur)
 	}
 
@@ -381,6 +387,26 @@ func (r *Retriever) fuseResults(vectorResults []SearchResult, ftsResults []Memor
 	}
 
 	return results
+}
+
+func (r *Retriever) reinforceTopResult(results []UnifiedResult, now time.Time) {
+	if len(results) == 0 {
+		return
+	}
+
+	top := &results[0]
+	if !decay.ShouldReinforce(top.Score) {
+		return
+	}
+
+	retrievedAt := now.UTC()
+	stabilityDays := decay.ReinforcedStability(top.Item.StabilityDays)
+	if err := r.store.UpdateMemoryDecay(top.Item.ID, top.Item.Confidence, stabilityDays, &retrievedAt); err != nil {
+		return
+	}
+
+	top.Item.LastRetrievedAt = &retrievedAt
+	top.Item.StabilityDays = stabilityDays
 }
 
 // calculateUnifiedScore computes a normalized score for ranking.
