@@ -48,4 +48,20 @@ use `gomor set` command and select `memory` to set up
 3. edit memory history
 use `gomor memory` command to edit memory history
 
+4. call memory operations directly from an agent or shell
+
+```shell
+# Save a memory
+gomor memory --save "The user prefers concise answers" --tags "preference,style"
+
+# Query memories in a LLM-friendly JSON format
+gomor memory --query "How should I answer this user?" --json
+
+# Delete an incorrect memory by id
+gomor memory --delete "memory-id" --json
+```
+
+For shell or LLM usage, prefer `--json` so the caller can reliably parse ids and scores.
+Memory retrieval is a weak signal for recency, not a correctness confirmation. Delete memories that are clearly wrong or obsolete.
+
 now you are ok to gomor!
